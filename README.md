@@ -4,6 +4,21 @@ fluentbit, filbeat 등등 테스트 및 배포용 레포지토리.  그 때 그 
 
 ## fluentbit
 
+
+```sh
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+
+helm pull bitnami/fluent-bit --version 3.0.0
+
+helm install my-fluent-bit bitnami/fluent-bit --version 3.0.0
+```
+
+- 헬름차트 선택
+  - 공식 or bitnami의 fluentbit 단독 헬름차트가 가장 무난
+  - 단독 차트가 버전 패치도 빠름
+  - fluentbit은 멀티아웃풋을 지원하므로, 다른 플랫폼과 묶인 차트 보다는 단독차트가 범용성도 가장 좋음 
+
 - 프로덕션에서 사용시 다음 설정을 별도로 설정해줘야 함. default가 아님
 - `DB` 설정: offset 관리. 파일 읽기(in_tail) 수행시 어디까지 읽었는지 기억하다가 프로세스 재시작 상황시 해당지점부터 작업 시작
 - `Storage` 설정: 전송실패시 buffer
