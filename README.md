@@ -39,9 +39,8 @@ helm install my-fluent-bit bitnami/fluent-bit --version 3.0.0
   - fluentd로 전송시,
     - fleuntd에선 별도 플러그인 설치 필요
     - 널리 쓰이긴 하지만 공식 플러그인은 아니고 소규모 커뮤니티에 의해 관리되는 오픈소스임. 버전 패치도 최근엔 없음. 멀티프로세싱 미지원(지원된다고 말은 하는데 멀티포트 방식임)
-    - fluentd 기본 지원된 in-tcp 플러그인으로도 beats 데이터를 수신하면서 멀티프로세싱을 할 수도 있으나, "비츠프로토콜"은 아님. 전용 플러그인을 써야 logstash와 동일한 통신규격이 됨
+    - fluentd 기본 플러그인 in-http, in-tcp 등으로도 beats 데이터를 수신하면서 멀티프로세싱을 할 수도 있으나, "비츠프로토콜"은 아님. 전용 플러그인을 써야 logstash와 동일한 통신규격이 됨
   - Offset 기능 Default로 활성화되어 있음 (registry 파일)
-
 
 
 
