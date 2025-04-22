@@ -20,7 +20,7 @@ sudo systemctl status fluent-bit
 ```sh
 /etc/fluent-bit/
 ├── fluent-bit.conf # 설정 파일 핵심
-├── parsers.conf    # 쉽게 불러 쓸 수 있는 파서 작성 가능  # 기본 제공 파서들 있음
+├── parsers.conf    # 여기에 파서를 미리 작성 후 호출하여 사용가능  # 기본 제공 파서들 있음
 └── plugins.conf    # 플러그인 경로 설정. default 비활성화
 ```
 
