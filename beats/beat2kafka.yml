@@ -1,0 +1,258 @@
+###################### Filebeat Configuration Example #########################
+
+# This file is an example configuration file highlighting only the most common
+# options. The filebeat.reference.yml file from the same directory contains all the
+# supported options with more comments. You can use it as a reference.
+#
+# You can find the full configuration reference here:
+# https://www.elastic.co/guide/en/beats/filebeat/index.html
+
+# For more available modules and options, please see the filebeat.reference.yml sample
+# configuration file.
+
+# ============================== Filebeat inputs ===============================
+
+filebeat.inputs:
+
+# Each - is an input. Most options can be set at the input level, so
+# you can use different inputs for various configurations.
+# Below are the input-specific configurations.
+
+# filestream is an input for collecting log messages from files.
+- type: filestream
+  id: my-filestream-id
+  enabled: true
+  paths: # 윈도우 경로표기시 슬래시 가능. yaml파일에서 역슬래시 파싱에러 주의
+    - C:/bizboxdownload/ds_ibt_all/world*/GameLog/**/*.log
+    #- c:\programdata\elasticsearch\logs\*
+
+  
+  # Filebeat 8.x부터 파일 고유성 판단에 fingerprint(앞부분 1024바이트 해시) 사용
+  # - inode 등 메타데이터 미사용, 앞부분이 같으면 같은 파일로 인식
+  # - 로그 앞부분에 유니크 값(시간, 서버명 등) 있으면 정확도↑
+  # - 파일 로테이션 환경에 유리
+  # - 1024바이트 미만 작은 파일은 로그수집 누락되며, fingerprint 비활성화 또는 크기 조정으로 해결 가능
+  # - 비활성화 시 기존처럼 inode 등으로 판단(재사용시 오탐 가능)
+
+  # 현재 fingerprint를 끄면 로그수집이 제대로 안되는 문제가있는데, 이건 뭔지 모르겠다. 확인필요. Registry 동작도 다르게하는듯??(추정)
+
+  # If enabled, instead of relying on the device ID and inode values when comparing files,
+  # compare hashes of the given byte ranges in files. A file becomes an ingest target
+  # when its size grows larger than offset+length (see below). Until then it's ignored.
+  # prospector.scanner.fingerprint.enabled: true
+
+  # If fingerprint mode is enabled, sets the offset from the beginning of the file
+  # for the byte range used for computing the fingerprint value.
+  # 이미 실행중인 filbeat에서 변경하면 안됨. 최초시작시만 설정
+  #prospector.scanner.fingerprint.offset: 0
+
+  # fingerprint 생성을 위한 파일 앞부분 활용크기
+  # 너무 작으면 파일 고유성 구분이 안되어 누락가능성 증가
+  # 너쿠 크면, 해당 용량 바이트수보다 작은 파일은 로그수집 실패하므로 주의 
+  # If fingerprint mode is enabled, sets the length of the byte range used for
+  # computing the fingerprint value. Cannot be less than 64 bytes.
+  prospector.scanner.fingerprint.length: 256   #1024
+
+  # Exclude lines. A list of regular expressions to match. It drops the lines that are
+  # matching any regular expression from the list.
+  # Line filtering happens after the parsers pipeline. If you would like to filter lines
+  # before parsers, use include_message parser.
+  #exclude_lines: ['^DBG']
+
+  # Include lines. A list of regular expressions to match. It exports the lines that are
+  # matching any regular expression from the list.
+  # Line filtering happens after the parsers pipeline. If you would like to filter lines
+  # before parsers, use include_message parser.
+  #include_lines: ['^ERR', '^WARN']
+
+  # Exclude files. A list of regular expressions to match. Filebeat drops the files that
+  # are matching any regular expression from the list. By default, no files are dropped.
+  #prospector.scanner.exclude_files: ['.gz$']
+
+  # Optional additional fields. These fields can be freely picked
+  # to add additional information to the crawled log files for filtering
+  #fields:
+  #  level: debug
+  #  review: 1
+
+# journald is an input for collecting logs from Journald
+#- type: journald
+
+  # Unique ID among all inputs, if the ID changes, all entries
+  # will be re-ingested
+  #id: my-journald-id
+
+  # The position to start reading from the journal, valid options are:
+  #  - head: Starts reading at the beginning of the journal.
+  #  - tail: Starts reading at the end of the journal.
+  #    This means that no events will be sent until a new message is written.
+  #  - since: Use also the `since` option to determine when to start reading from.
+  #seek: head
+
+  # A time offset from the current time to start reading from.
+  # To use since, seek option must be set to since.
+  #since: -24h
+
+  # Collect events from the service and messages about the service,
+  # including coredumps.
+  #units:
+    #- docker.service
+
+# ============================== Filebeat modules ==============================
+
+filebeat.config.modules:
+  # Glob pattern for configuration loading
+  path: ${path.config}/modules.d/*.yml
+
+  # Set to true to enable config reloading
+  reload.enabled: false
+
+  # Period on which files under path should be checked for changes
+  #reload.period: 10s
+
+
+# ================================== General ===================================
+
+# The name of the shipper that publishes the network data. It can be used to group
+# all the transactions sent by a single shipper in the web interface.
+#name:
+
+# The tags of the shipper are included in their field with each
+# transaction published.
+#tags: ["service-X", "web-tier"]
+
+# Optional fields that you can specify to add additional information to the
+# output.
+#fields:
+#  env: staging
+
+
+# ================================== Outputs ===================================
+
+# Configure what output to use when sending the data collected by the beat.
+
+# -------------------------------- Kafka Output --------------------------------
+output.kafka:
+  # Boolean flag to enable or disable the output module.
+  enabled: true
+
+  # The list of Kafka broker addresses from which to fetch the cluster metadata.
+  # The cluster metadata contain the actual Kafka brokers events are published
+  # to.
+  hosts: ["wsl:9095"]
+
+  # The Kafka topic used for produced events. The setting can be a format string
+  # using any event field. To set the topic from document type use `%{[type]}`.
+  topic: beats2kfk-direct1
+
+
+
+  # Metadata update configuration. Metadata contains leader information
+  # used to decide which broker to use when publishing.
+  #metadata:
+    # Max metadata request retry attempts when cluster is in middle of leader
+    # election. Defaults to 3 retries.
+    #retry.max: 3
+
+    # Wait time between retries during leader elections. Default is 250ms.
+    #retry.backoff: 250ms
+
+    # Refresh metadata interval. Defaults to every 10 minutes.
+    #refresh_frequency: 10m
+
+    # Strategy for fetching the topics metadata from the broker. Default is false.
+    #full: false
+
+  # The number of times to retry publishing an event after a publishing failure.
+  # After the specified number of retries, events are typically dropped.
+  # Some Beats, such as Filebeat, ignore the max_retries setting and retry until
+  # all events are published.  Set max_retries to a value less than 0 to retry
+  # until all events are published. The default is 3.
+  # Kafka Client Library의 설정으로서 max_retries가 있지만, filebeat는 자체적으로 이 값을 무시하고 계속 재시도한다. (https://www.elastic.co/docs/reference/beats/filebeat/kafka-output)
+  #max_retries: 3
+
+  # The number of seconds to wait before trying to republish to Kafka
+  # after a network error. After waiting backoff.init seconds, the Beat
+  # tries to republish. If the attempt fails, the backoff timer is increased
+  # exponentially up to backoff.max. After a successful publish, the backoff
+  # timer is reset. The default is 1s.
+  #backoff.init: 1s
+
+  # The maximum number of seconds to wait before attempting to republish to
+  # Kafka after a network error. The default is 60s.
+  #backoff.max: 60s
+
+  # The maximum number of events to bulk in a single Kafka request. The default
+  # is 2048.
+  #bulk_max_size: 2048
+
+  # Duration to wait before sending bulk Kafka request. 0 is no delay. The default
+  # is 0.
+  #bulk_flush_frequency: 0s
+
+  # The number of seconds to wait for responses from the Kafka brokers before
+  # timing out. The default is 30s.
+  #timeout: 30s
+
+  # The maximum duration a broker will wait for number of required ACKs. The
+  # default is 10s.
+  #broker_timeout: 10s
+
+  # The number of messages buffered for each Kafka broker. The default is 256.
+  #channel_buffer_size: 256
+
+  # The keep-alive period for an active network connection. If 0s, keep-alives
+  # are disabled. The default is 0 seconds.
+  #keep_alive: 0
+
+  # Sets the output compression codec. Must be one of none, snappy and gzip. The
+  # default is gzip.
+  compression: gzip  # snappy: 빠른처리, 낮은CPU부하   # gzip: 높은 압축률, CPU부하증가, 네트워크 비용 감소
+
+  # Set the compression level. Currently only gzip provides a compression level
+  # between 0 and 9. The default value is chosen by the compression algorithm.
+  #compression_level: 4
+
+  # The maximum permitted size of JSON-encoded messages. Bigger messages will be
+  # dropped. The default value is 1000000 (bytes). This value should be equal to
+  # or less than the broker's message.max.bytes.
+  #max_message_bytes: 1000000
+
+  # The ACK reliability level required from broker. 0=no response, 1=wait for
+  # local commit, -1=wait for all replicas to commit. The default is 1.  Note:
+  # If set to 0, no ACKs are returned by Kafka. Messages might be lost silently
+  # on error.
+  #required_acks: 1
+
+  # The configurable ClientID used for logging, debugging, and auditing
+  # purposes.  The default is "beats".
+  #client_id: beats
+
+
+# ------------------------------ Logstash(or FLUENTD) Output -------------------
+# output.logstash:
+#   # The Logstash hosts
+#   hosts: ["wsl:5044"]
+
+
+# ================================= Processors =================================
+processors:
+  - drop_fields:
+      fields: ["ecs", "input", "agent", "log.file.idxhi", "log.file.idxlo", "log.file.vol"] # filebeat가 기본포함시키는 메타데이터 필드 일부 제거
+  # - add_host_metadata: 
+      # when.not.contains.tags: forwarded
+  # - add_cloud_metadata: ~
+  # - add_docker_metadata: ~
+  # - add_kubernetes_metadata: ~
+
+
+# ================================== Logging ===================================
+
+# Sets log level. The default log level is info.
+# Available log levels are: error, warning, info, debug
+#logging.level: debug
+
+# At debug level, you can selectively enable logging only for some components.
+# To enable all selectors, use ["*"]. Examples of other selectors are "beat",
+# "publisher", "service".
+#logging.selectors: ["*"]
