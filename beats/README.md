@@ -4,7 +4,7 @@
 
 - 공홈에서 zip or msi 다운로드
   - 둘 다 구성파일 거의 동일
-    - msi로 설치시 설정파일: `C:\Program Files\Elastic\Beats\9.0.1\filebeat`
+    - msi로 설치시 실행/설정파일: `C:\Program Files\Elastic\Beats\9.0.1\filebeat\`
     - msi로 설치시 레지스트리파일: `C:\ProgramData\filebeat\data\registry\data\`
   - 프로덕션 환경에서 윈도우 서비스로 실행시, 포함된 서비스 설치 스크립트를 실행해야 함
   - 서비스 최초 설치 후 설정파일 변경시 서비스 재시작만하면 반영됨
