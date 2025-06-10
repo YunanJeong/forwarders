@@ -1,4 +1,4 @@
-# 버퍼 관련 설정
+# fluent-bit 버퍼 관련 설정
 
 - https://docs.fluentbit.io/manual/concepts/data-pipeline/buffer
 - https://docs.fluentbit.io/manual/administration/backpressure
@@ -6,16 +6,21 @@
 
 ## 개요
 
-버퍼 관련 옵션을 보다 보면 헷갈리는 지점들이 있음
+fluent-bit의 버퍼 관련 옵션을 보다 보면 헷갈리는 지점들이 있음
 
-[INPUT]플러그인에서 `storage.type filesystem`설정으로 파일버퍼를 활성화시키는데 왜 파일버퍼 관련 튜닝옵션들은 [OUTPUT]플러그인에 모여있는가? 각각이 다른 파일버퍼인 것인가? 근데 왜 [INPUT]쪽엔 활성화 외에 디테일한 파일버퍼 튜닝옵션이 없는가?
+- [INPUT]플러그인에서 `storage.type filesystem`설정으로 파일버퍼를 활성화시키는데 왜 파일버퍼 관련 튜닝옵션들은 [OUTPUT]플러그인에 모여있는가?
+- 각각이 다른 파일버퍼인 것인가?
+- 근데 왜 [INPUT]쪽엔 파일버퍼 활성화 외에 디테일한 파일버퍼튜닝옵션이 없는가?
+- 서로 의존성이 있는 버퍼 관련 옵션들이 많은 것 같은데 왜 여러 플러그인 섹션에 걸쳐서 설정해야 하는가?(A 옵션을 활성화하면, B는 활성화되고 C가 비활성화 된다던가... 등등)
+
+이러한 질문들을 포함하여 설정방법 및 내부 동작에 의문스러운 부분들이 있는데 문서출처, 실제 테스트한 내용을 바탕으로 버퍼 관련 옵션을 여기에 모두 정리한다.
 
 ## fluent-bit의 버퍼(큐) 특징
 
-- fluent-bit의 데이터 처리 최소 단위는 청크이며 큐(Queue)를 통해서 처리한다.
-- fluent-bit에선 memory 버퍼는 항상 존재하며, filesystem 버퍼 활성화시 secondary buffer로 파일시스템이 사용되는 개념
+- fluent-bit의 데이터 처리 최소 단위는 청크(Chunk)이며 큐(Queue)를 통해서 처리한다.
+- `fluent-bit에선 메모리버퍼(memory)는 항상 존재하며, 파일버퍼(filesystem) 활성화시 secondary buffer로 파일시스템이 사용`되는 개념
   - 파일버퍼가 활성화되어있어도 메모리버퍼 한도를 넘지 않는다면 메시지는 파일시스템을 거치지 않고 전송됨
-  - fluentd와는 다른 지점임. fluentd는 메모리,파일 버퍼 중 하나만 선택하고 파일버퍼의 경우 정상처리되는 메시지도 반드시 파일시스템을 거쳐감.
+  - fluentd와는 다른 지점임. fluentd는 메모리,파일버퍼 중 하나만 선택하고 파일버퍼의 경우 정상처리되는 메시지도 반드시 파일시스템을 거쳐감.
 - `메모리버퍼 단독사용시, 메모리 한도에 다다르면 신규 로그라인 읽기(tail) 중단`
   - 타겟파일이 삭제되거나 로테이션되면 위험
 - `메모리버퍼+파일버퍼 사용시, 파일버퍼 한도에 다다르면 오래된 것부터 삭제`
@@ -24,15 +29,18 @@
 
 - [Official Architecture](https://docs.fluentbit.io/manual/concepts/data-pipeline/buffer)
   ![시스템 구조도](./fluent-bit-pipeline.jpg)
-- memory든 filesystem이든 Buffer의 시스템 상 위치는 그림과 같이 OUTPUT 단계 직전에 있음
+- memory든 filesystem이든 Buffer의 시스템 상 위치는 그림과 같이 OUTPUT 단계 전에 있음
 - Buffer는 별도 플러그인이 존재하지는 않고, 내부 엔진이 처리함.
-- Buffer 설정은 [INPUT](주로 memory버퍼), Output(주로 filesystem버퍼), Service(전역설정) 플러그인에서 하게 됨
-- 위 그림의 Buffer 자리에서 filesystem 버퍼는 Output 별로 존재 함. Output 플랫폼 별로 조건이 상이하기 때문에 전송실패시 안정성을 위한 filesystem 버퍼도 Output 별로 구분할 필요성이 있기 때문.
-- 만약 멀티 Input인 경우, Buffer자리에 Input에서 설정한 tag에 따라서 별도 memory 버퍼가 존재 함.
-- 이렇게 설계된 이유
+- 이에따라 Buffer 설정은 각각 아래와 같이 나누어져 있으며 채택한 플러그인 따라 미묘하게 다를 수 있음
+  - [INPUT]섹션: 주로 메모리버퍼 관련 설정이 포함됨
+  - [Output]섹션: 주로 파일버퍼 관련 설정이 포함됨
+  - [Service]섹션: 주로 전역설정
+- 위 그림과 같이 멀티 Output인 경우, 그림의 Buffer자리에 파일버퍼가 Output마다 존재 함. Output플랫폼마다 조건이 상이하므로 전송실패시 안정성을 위한 파일버퍼도 Output별로 구분할 필요성이 있기 때문.
+- 만약 멀티 Input인 경우, Buffer자리에 Input에서 설정한 tag에 따라서 별도 메모리버퍼가 존재 함.
+- **<이렇게 설계된 이유>**
   - 메모리와 파일버퍼 자리를 바꿔도 실제 수행에 문제는 없다.
-  - 다만, 데이터 유실방지를 방지하기 위해 일반적으로 활용되는 것이 파일버퍼이고, 주로 OUTPUT 전송실패시 백프레셔 등으로 데이터유실 이슈가 발생하므로 파일버퍼를 secondary 버퍼로 뒷단에 두어 안정성을 강화한다.
-  - fluent-bit는 적절한 속도로 로그 수집을 하면서 프로세스가 죽지 않아야 하는데 사실상 메모리와 직결된 문제이므로 메모리 버퍼를 primary 버퍼로 앞단에 두어 로그 수집 속도를 제어한다.
+  - 다만, 데이터유실을 방지하기 위해 일반적으로 활용되는 것이 파일버퍼이고, 데이터유실은 주로 OUTPUT 전송실패시 백프레셔 등으로 인해 발생하므로 파일버퍼를 secondary 버퍼로 뒷단에 두어 안정성을 강화한다.
+  - fluent-bit는 적절한 속도로 로그 수집을 하면서 프로세스가 죽지 않아야 하는데 사실상 메모리와 직결된 문제이므로 메모리버퍼를 primary 버퍼로 앞단에 두어 로그 수집 속도를 제어한다.
 
 ## [SERVICE]
 
@@ -55,16 +63,17 @@
 ## [INPUT]
 
 - **storage.type memory**
-  - 파일 버퍼 사용 여부 결정
+  - 파일버퍼 사용 여부 결정
   - default: memory
   - 값 예시
     - memory: 메모리버퍼만 사용
-    - filesystem: 파일버퍼를 추가하여 사용(메모리 버퍼와 함께 동작함). 파일버퍼 활성화를 위한 [INPUT]에서 최소 필요 설정
+    - filesystem: 파일버퍼를 추가하여 사용(메모리버퍼와 함께 동작함). 파일버퍼 활성화를 위한 [INPUT]에서 최소 필요 설정
 - **Mem_Buf_Limit**
   - 메모리버퍼 총량 제한
   - default: 제한 없음
   - 값 예시: 500M,2G 등 용량기술
-  - 메모리버퍼 단독 사용시에만 적용(`storage.type memory`). 파일버퍼 활성화시 무시됨.
+  - 메모리버퍼 단독 사용시에만 적용(`storage.type memory`).
+  - 파일버퍼 활성화시 무시되며, 대신 [SERVICE]의 storage.max_chunks_up로 메모리버퍼 총량 제한
 
 ### [INPUT-tail플러그인전용]
 
@@ -82,9 +91,9 @@
 ## [OUTPUT]
 
 - **storage.total_limit_size**
-  - 목적지 별 파일 버퍼 총량 제한
+  - 목적지 별 파일버퍼 총량 제한
   - default: 없음
   - 값 예시: 500M, 2G 등 용량 기술
-  - 파일 버퍼 활성화 여부는 input에서 하지만, 크기 제한은 이 옵션으로 output에서 한다.
+  - 파일버퍼 활성화 여부는 input에서 하지만, 크기 제한은 이 옵션으로 output에서 한다.
     - 동일 input에 여러 output이 있을 수 있으므로 개별 output에서 버퍼를 제어해야 함
   - 임계치 도달시 오래된 청크부터 삭제됨
