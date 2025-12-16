@@ -48,18 +48,16 @@ filebeat.inputs:
   # 주의: filebeat 최초 실행시에도 적용되므로, 기존 파일이 있다면 지정 시간보다 이전의 파일은 수집되지 않음
   ignore_older: 48h
   
-  # Filebeat 8.x부터 파일 고유성 판단에 fingerprint(앞부분 1024바이트 해시) 사용
+  # If enabled, instead of relying on the device ID and inode values when comparing files,
+  # compare hashes of the given byte ranges in files. A file becomes an ingest target
+  # when its size grows larger than offset+length (see below). Until then it's ignored.
+  # Filebeat 8.x부터 파일 고유성 판단에 fingerprint(앞부분 1024바이트 해시) 사용 (default)
   # - inode 등 메타데이터 미사용, 앞부분이 같으면 같은 파일로 인식
   # - 로그 앞부분에 유니크 값(시간, 서버명 등) 있으면 정확도↑
   # - 파일 로테이션 환경에 유리
   # - 1024바이트 미만 작은 파일은 로그수집 누락되며, fingerprint 비활성화 또는 크기 조정으로 해결 가능
   # - 비활성화 시 기존처럼 inode 등으로 판단(재사용시 오탐 가능)
-
   # 현재 fingerprint를 끄면 로그수집이 제대로 안되는 문제가있는데, 이건 뭔지 모르겠다. 확인필요. Registry 동작도 다르게하는듯??(추정)
-
-  # If enabled, instead of relying on the device ID and inode values when comparing files,
-  # compare hashes of the given byte ranges in files. A file becomes an ingest target
-  # when its size grows larger than offset+length (see below). Until then it's ignored.
   # prospector.scanner.fingerprint.enabled: true
 
   # If fingerprint mode is enabled, sets the offset from the beginning of the file
@@ -67,9 +65,12 @@ filebeat.inputs:
   # 이미 실행중인 filbeat에서 변경하면 안됨. 최초시작시만 설정
   #prospector.scanner.fingerprint.offset: 0
 
-  # fingerprint 생성을 위한 파일 앞부분 활용크기
-  # 너무 작으면 파일 고유성 구분이 안되어 누락가능성 증가
-  # 너쿠 크면, 해당 용량 바이트수보다 작은 파일은 로그수집 실패하므로 주의 
+  # Fingerprint 기능: 파일의 고유성을 판단하기 위해, 파일 앞부분 일정길이를 활용합니다.
+  # 이 길이가 너무 작으면, 파일의 고유성을 구분하지 못해 로그수집 누락이 발생할 수 있습니다.
+  # 너무 크면, 해당 용량 바이트수보다 작은 파일은 로그수집 실패하므로 주의가 필요합니다.
+  # - 파일 앞부분이 같으면 같은 파일로 인식
+  # - 로그 앞부분에 유니크 값(시간, 서버명 등) 있으면 고유성↑
+  # - 파일 로테이션 환경에 유리
   # If fingerprint mode is enabled, sets the length of the byte range used for
   # computing the fingerprint value. Cannot be less than 64 bytes.
   prospector.scanner.fingerprint.length: 256   #1024
