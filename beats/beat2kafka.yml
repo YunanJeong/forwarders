@@ -61,7 +61,8 @@ filebeat.inputs:
   #       다음 신규 로그가 또 생기면 다시 open하여 모두 읽지만,
   #       close 당시 로그가 그 파일의 마지막 로그면 누락 위험.
   #       매우 간헐적으로 갱신되는 파일을 읽을시 이 설정을 크게하는게 안전
-  close.on_state_change.inactive: 5m # default: 5m
+  # default: 5m
+  close.on_state_change.inactive: 5m 
 
   # If enabled, instead of relying on the device ID and inode values when comparing files,
   # compare hashes of the given byte ranges in files. A file becomes an ingest target
@@ -88,7 +89,8 @@ filebeat.inputs:
   # - 파일 로테이션 환경에 유리
   # If fingerprint mode is enabled, sets the length of the byte range used for
   # computing the fingerprint value. Cannot be less than 64 bytes.
-  prospector.scanner.fingerprint.length: 256   #1024
+  # default: 1024
+  prospector.scanner.fingerprint.length: 256   
 
   # Exclude lines. A list of regular expressions to match. It drops the lines that are
   # matching any regular expression from the list.
@@ -267,7 +269,7 @@ output.kafka:
   # on error.
   # default 1 (acks=1)
   # 고가용성 보장시 -1 (acks=all)
-  required_acks: 1
+  required_acks: -1
 
   # The configurable ClientID used for logging, debugging, and auditing
   # purposes.  The default is "beats".
@@ -283,7 +285,8 @@ output.kafka:
 # ================================= Processors =================================
 processors:
   - drop_fields:
-      fields: ["ecs", "input", "agent", "log.file.idxhi", "log.file.idxlo", "log.file.vol"] # filebeat가 기본포함시키는 메타데이터 필드 일부 제거
+      # filebeat가 기본포함시키는 메타데이터 필드 일부 제거
+      fields: ["ecs", "input", "agent", "log.file.idxhi", "log.file.idxlo", "log.file.vol"] 
   # - add_host_metadata: 
       # when.not.contains.tags: forwarded
   # - add_cloud_metadata: ~
