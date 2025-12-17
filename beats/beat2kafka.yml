@@ -246,10 +246,10 @@ output.kafka:
   # are disabled. The default is 0 seconds.
   #keep_alive: 0
 
-  # Sets the output compression codec. Must be one of none, snappy and gzip. The
+  # 압축전송(gzip: CPU 부하가 미세하게 증가하나, 네트워크 대역폭 면에서 압도적으로 유리함)
+  # snappy: 빠른처리, 낮은CPU부하   # gzip: 높은 압축률, CPU부하증가, 네트워크 비용 감소
   # default is gzip.
-    # 압축전송(gzip: CPU 부하가 미세하게 증가하나, 네트워크 대역폭 면에서 압도적으로 유리함)
-  compression: gzip  # snappy: 빠른처리, 낮은CPU부하   # gzip: 높은 압축률, CPU부하증가, 네트워크 비용 감소
+  compression: gzip  
 
   # Set the compression level. Currently only gzip provides a compression level
   # between 0 and 9. The default value is chosen by the compression algorithm.
@@ -260,7 +260,7 @@ output.kafka:
   # or less than the broker's message.max.bytes.
   # Kafka Client Library의 단일 메시지 전송 크기 제한
   # Kafka 측 설정값과 같거나 작아야 함
-  # filebeat input은 10MB까지 읽지만, OUTPUT KAFKA의 default는 1000000(약 1MB)
+  # default는 1000000(약 1MB)
   max_message_bytes: 1000000
 
   # The ACK reliability level required from broker. 0=no response, 1=wait for
@@ -269,7 +269,7 @@ output.kafka:
   # on error.
   # default 1 (acks=1)
   # 고가용성 보장시 -1 (acks=all)
-  required_acks: -1
+  required_acks: 1
 
   # The configurable ClientID used for logging, debugging, and auditing
   # purposes.  The default is "beats".
