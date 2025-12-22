@@ -10,4 +10,4 @@ sudo systemctl enable filebeat
 # DEB 설치시, 로그 및 오프셋 레지스트리 경로:  /var/lib/filebeat
 
 # 시작
-sudo systemctl start filebeat
+# sudo systemctl start filebeat
