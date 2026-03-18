@@ -27,3 +27,15 @@ PowerShell.exe -ExecutionPolicy UnRestricted -File .\install-service-filebeat.ps
 # 서비스 삭제 후 재설치시 서비스 삭제 대기 중으로 에러가 난다면, 이 명령어로 완전삭제 가능 
 sc delete filebeat
 ```
+
+## filebeat 버전 선택 및 변경시 요령
+
+- `가급적 최신 릴리즈 선택`하고, 안정성이 극단적으로 중요시 과거 메이저의 마지막 버전 선택(마이너 기준 X)
+- beat는 릴리즈 주기가 매우 빠르며, LTS 개념 없음
+- `신규 Minor버전 릴리즈시, 과거 마이너 버전은 거의 지원중단 수준임(보안패치도 잘 안함)`
+- `Elastic 정책상, 직전 Minor버전의 최신 Patch버전 선택은 딱히 좋은 선택이 아님`
+- 중간 숫자 Minor버전은 사실상 patch레벨로 보는게 좋음
+- 업그레이드시 호환성
+  - 여느 소프트웨어처럼 메이저 버전 내에서는 과거 버전 설정 호환성을 지원
+  - 미호환 가능성이 있을시, 공식 문서에서 "Breaking Changes"로 별도 정리해주므로 이것만 참고하면 됨
+  - https://www.elastic.co/docs/release-notes/beats/breaking-changes
