@@ -4,9 +4,12 @@
 
 - 공홈에서 zip or msi 다운로드
   - 둘 다 구성파일 거의 동일
-    - msi로 설치시 실행/설정파일: `C:\Program Files\Elastic\Beats\9.0.1\filebeat\`
-    - msi로 설치시 레지스트리파일: `C:\ProgramData\filebeat\data\registry\data\`
-    - `9.0.6, 9.1.0부터 윈도우 버전 기본경로 변경`
+    - msi설치시 설치 및 설정파일 경로
+      - `C:\Program Files\Elastic\Beats\{VERSION}\filebeat\`
+    - msi설치시 메타데이터 경로
+      - `C:\ProgramData\filebeat\data\registry\data\`
+    - msi설치시 메타데이터 경로(9.0.6, 9.1.0~ 버전 이후, 앱 최초 1회 실행시 생성)
+      - `C:\Program Files\Filebeat-Data\Filebeat`
   - 실무 환경에서는 제공되는 서비스 설치 스크립트를 이용해 Filebeat를 윈도우 서비스로 등록하고 실행해야 함
   - 설정파일 변경시 다시 서비스 등록할 필요는 없고, 서비스 재시작만 하면 됨
 
@@ -41,8 +44,9 @@ PowerShell.exe -ExecutionPolicy UnRestricted -File .\uninstall-service-filebeat.
 
 ## filebeat 클린 삭제 
 
-- 아래 내용은 편의상 스크립트로 나타낸 것으로, 윈도우특성상 권한문제 등으로 막힐 수 있음
-- 주석 내용을 똑같이 UI에서 처리해도 상관없음
+- 수동삭제시 서비스 중지, 설치경로 삭제, 메타데이터경로 삭제 하면된다.
+- `윈도우 msi로 설치했을 시, 프로그램 추가/제거` 사용
+  - 일련의 과정이 자동진행되며, 설치경로 및 메타데이터 경로에서, 변경사항이 있는 파일들은 그대로 남으므로 필요없을시 수동삭제
 
 ```sh
 # 1. 서비스 중지 (또는 services.msc에서 삭제)
@@ -52,11 +56,12 @@ Stop-Service filebeat -Force
 .\uninstall-service-filebeat.ps1  # 또는 sc.exe delete filebeat 
 
 # 3. Filebeat 설치 경로 삭제
-Remove-Item -Recurse -Force "C:\Program Files\Filebeat"
+Remove-Item -Recurse -Force "C:\Program Files\Elastic\Beats"
 
 # 4. Filebeat 메타데이터 경로 삭제
 Remove-Item -Recurse -Force "$env:ProgramData\filebeat"
 ```
+
 
 ## filebeat 버전 선택 및 변경시 요령(Elastic 정책상 약간 특이하므로 반드시 참고)
 
