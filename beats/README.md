@@ -58,8 +58,11 @@ Stop-Service filebeat -Force
 # 3. Filebeat 설치 경로 삭제
 Remove-Item -Recurse -Force "C:\Program Files\Elastic\Beats"
 
-# 4. Filebeat 메타데이터 경로 삭제
+# 4. 구버전 Filebeat 메타데이터 경로 삭제
 Remove-Item -Recurse -Force "$env:ProgramData\filebeat"
+
+# 4. Filebeat 메타데이터 경로 삭제
+Remove-Item -Recurse -Force "C:\Program Files\Filebeat-Data\Filebeat"
 ```
 
 
