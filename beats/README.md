@@ -6,6 +6,7 @@
   - 둘 다 구성파일 거의 동일
     - msi로 설치시 실행/설정파일: `C:\Program Files\Elastic\Beats\9.0.1\filebeat\`
     - msi로 설치시 레지스트리파일: `C:\ProgramData\filebeat\data\registry\data\`
+    - `9.0.6, 9.1.0부터 윈도우 버전 기본경로 변경`
   - 실무 환경에서는 제공되는 서비스 설치 스크립트를 이용해 Filebeat를 윈도우 서비스로 등록하고 실행해야 함
   - 설정파일 변경시 다시 서비스 등록할 필요는 없고, 서비스 재시작만 하면 됨
 
