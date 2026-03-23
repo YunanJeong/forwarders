@@ -22,11 +22,40 @@ PowerShell.exe -ExecutionPolicy UnRestricted -File .\install-service-filebeat.ps
 
 ## 서비스 삭제시
 
-- uninstall 스크립트도 filebeat설치경로에 있음
+- uninstall 스크립트도 filebeat설치경로에 있음. 관리자 권한 파워쉘로 실행
 
 ```sh
 # 서비스 삭제 후 재설치시 서비스 삭제 대기 중으로 에러가 난다면, 이 명령어로 완전삭제 가능 
 sc delete filebeat
+```
+
+```sh
+# 또는 
+
+# 관리자 권한 Powershell에서 스크립트 실행
+.\uninstall-service-filebeat.ps1
+
+# OS의 스크립트 보안정책에 의해 차단된 경우 다음과 같이 해당 파일만 일시허용하면서 실행가능
+PowerShell.exe -ExecutionPolicy UnRestricted -File .\uninstall-service-filebeat.ps1
+```
+
+## filebeat 클린 삭제 
+
+- 아래 내용은 편의상 스크립트로 나타낸 것으로, 윈도우특성상 권한문제 등으로 막힐 수 있음
+- 주석 내용을 똑같이 UI에서 처리해도 상관없음
+
+```sh
+# 1. 서비스 중지 (또는 services.msc에서 삭제)
+Stop-Service filebeat -Force
+
+# 2. 서비스 제거 (filebeat 설치경로에서 실행)
+.\uninstall-service-filebeat.ps1  # 또는 sc.exe delete filebeat 
+
+# 3. Filebeat 설치 경로 삭제
+Remove-Item -Recurse -Force "C:\Program Files\Filebeat"
+
+# 4. Filebeat 메타데이터 경로 삭제
+Remove-Item -Recurse -Force "$env:ProgramData\filebeat"
 ```
 
 ## filebeat 버전 선택 및 변경시 요령(Elastic 정책상 약간 특이하므로 반드시 참고)
