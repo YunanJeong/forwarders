@@ -1,4 +1,4 @@
-# Filebeat for windows
+# Filebeat for Windows
 
 ## 윈도우에서 filebeat 설치 및 서비스로 실행
 
@@ -22,6 +22,13 @@ PowerShell.exe -ExecutionPolicy UnRestricted -File .\install-service-filebeat.ps
 
 - 서비스 설치후 `작업관리자-서비스`에서 확인가능
   - 안보이면 윈도 앱 실행에서 `services.msc`로 진입
+
+## 멀티 서비스 (멀티 아웃풋)
+
+- filebeat는 멀티 아웃풋 미지원
+- 별도 서비스로 배포해야 함
+- 서비스 간 설정경로/메타데이터 경로 분리 필수
+- "filebeat"서비스명이 겹치지 않도록 install-service-filebeat.ps1 수정
 
 ## 서비스 삭제시
 
